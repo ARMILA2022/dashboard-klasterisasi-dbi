@@ -5,65 +5,60 @@ import json
 
 
 # ============================================================
-# KONFIGURASI HALAMAN
+# KONFIGURASI
 # ============================================================
 
 st.set_page_config(
-    page_title="Dashboard Klasterisasi DBI Sumatera Barat",
+    page_title="Dashboard Klasterisasi Sosial Ekonomi",
     page_icon="📊",
     layout="wide"
 )
 
 
 # ============================================================
-# LOAD DATA
+# MEMBACA DATA
 # ============================================================
 
 @st.cache_data
 def load_data():
 
-    # Data hasil clustering
     data = pd.read_excel(
         "data_dashboard_dbi.xlsx"
     )
 
-    # Data centroid
     centroid = pd.read_excel(
         "centroid_cluster_dbi.xlsx"
     )
 
-    # Hasil perhitungan DBI K=2 sampai K=10
-    df_dbi = pd.read_excel(
+    hasil_dbi = pd.read_excel(
         "hasil_dbi.xlsx"
     )
 
-    # Data peta
     with open(
         "hasil_cluster_peta_dbi.geojson",
         "r",
         encoding="utf-8"
     ) as file:
-
         peta = json.load(file)
 
-    return data, centroid, df_dbi, peta
+    return data, centroid, hasil_dbi, peta
 
 
 # ============================================================
-# MEMANGGIL DATA
+# LOAD DATA
 # ============================================================
 
 try:
 
-    data, centroid, df_dbi, peta = load_data()
+    data, centroid, hasil_dbi, peta = load_data()
 
 except Exception as e:
 
     st.error("Data dashboard gagal dibaca.")
 
     st.write(
-        "Pastikan semua file berada dalam repository GitHub "
-        "yang sama dengan app.py."
+        "Pastikan semua file berada dalam repository "
+        "GitHub yang sama dengan app.py."
     )
 
     st.code(str(e))
@@ -72,21 +67,38 @@ except Exception as e:
 
 
 # ============================================================
-# CEK KOLOM DBI
+# VALIDASI DATA DBI
 # ============================================================
 
-if "K" not in df_dbi.columns or "DBI" not in df_dbi.columns:
+if "K" not in hasil_dbi.columns:
 
     st.error(
-        "File hasil_dbi.xlsx harus memiliki kolom 'K' dan 'DBI'."
+        "Kolom 'K' tidak ditemukan dalam hasil_dbi.xlsx."
     )
 
     st.write(
-        "Kolom yang ditemukan:"
+        "Kolom yang tersedia:"
     )
 
     st.write(
-        list(df_dbi.columns)
+        list(hasil_dbi.columns)
+    )
+
+    st.stop()
+
+
+if "DBI" not in hasil_dbi.columns:
+
+    st.error(
+        "Kolom 'DBI' tidak ditemukan dalam hasil_dbi.xlsx."
+    )
+
+    st.write(
+        "Kolom yang tersedia:"
+    )
+
+    st.write(
+        list(hasil_dbi.columns)
     )
 
     st.stop()
@@ -96,37 +108,37 @@ if "K" not in df_dbi.columns or "DBI" not in df_dbi.columns:
 # MEMBERSIHKAN DATA DBI
 # ============================================================
 
-df_dbi["K"] = pd.to_numeric(
-    df_dbi["K"],
+hasil_dbi["K"] = pd.to_numeric(
+    hasil_dbi["K"],
     errors="coerce"
 )
 
-df_dbi["DBI"] = pd.to_numeric(
-    df_dbi["DBI"],
+hasil_dbi["DBI"] = pd.to_numeric(
+    hasil_dbi["DBI"],
     errors="coerce"
 )
 
-df_dbi = df_dbi.dropna(
+hasil_dbi = hasil_dbi.dropna(
     subset=["K", "DBI"]
 )
 
-df_dbi = df_dbi.sort_values(
+hasil_dbi = hasil_dbi.sort_values(
     "K"
 ).reset_index(drop=True)
 
 
 # ============================================================
-# MENENTUKAN K OPTIMAL OTOMATIS
+# MENENTUKAN K OPTIMAL
 # ============================================================
 
-index_terbaik = df_dbi["DBI"].idxmin()
+index_terbaik = hasil_dbi["DBI"].idxmin()
 
 k_optimal = int(
-    df_dbi.loc[index_terbaik, "K"]
+    hasil_dbi.loc[index_terbaik, "K"]
 )
 
 dbi_terbaik = float(
-    df_dbi.loc[index_terbaik, "DBI"]
+    hasil_dbi.loc[index_terbaik, "DBI"]
 )
 
 
@@ -139,15 +151,14 @@ st.title(
 )
 
 st.subheader(
-    "Provinsi Sumatera Barat Menggunakan K-Means "
-    
+    "Provinsi Sumatera Barat Menggunakan K-Means"
 )
 
 st.write(
     "Dashboard ini menyajikan hasil klasterisasi "
     "kabupaten/kota di Provinsi Sumatera Barat "
-    "berdasarkan indikator sosial ekonomi menggunakan "
-    "algoritma K-Means."
+    "berdasarkan indikator sosial ekonomi "
+    "menggunakan algoritma K-Means."
 )
 
 
@@ -198,7 +209,7 @@ if menu == "Beranda":
     with col3:
 
         st.metric(
-            "DBI Terbaik",
+            "Nilai DBI",
             f"{dbi_terbaik:.4f}"
         )
 
@@ -212,9 +223,9 @@ if menu == "Beranda":
     st.divider()
 
     st.success(
-        f"K optimal berdasarkan DBI adalah "
-        f"{k_optimal} dengan nilai DBI "
-        f"{dbi_terbaik:.4f}."
+        f"Jumlah cluster optimal berdasarkan "
+        f"Davies-Bouldin Index adalah {k_optimal} "
+        f"dengan nilai DBI sebesar {dbi_terbaik:.4f}."
     )
 
     st.subheader(
@@ -265,47 +276,50 @@ if menu == "Beranda":
 
 
 # ============================================================
-# K optimal DBI
+# PENENTUAN K OPTIMAL
 # ============================================================
 
-elif menu == "K optimal DBI":
+elif menu == "Penentuan K Optimal":
 
     st.header(
-        "📈 K optimal dengan Davies-Bouldin Index"
+        "📊 Penentuan K Optimal Menggunakan DBI"
     )
 
     st.write(
-        "Metode Davies-Bouldin Index digunakan untuk "
-        "menentukan jumlah cluster optimal. "
-        "K optimal dipilih berdasarkan nilai DBI "
-        "yang paling rendah."
+        "Davies-Bouldin Index (DBI) digunakan untuk "
+        "menentukan jumlah cluster (K) optimal. "
+        "Nilai DBI yang lebih kecil menunjukkan "
+        "hasil clustering yang lebih baik."
     )
+
+    st.divider()
 
     # --------------------------------------------------------
     # GRAFIK DBI
     # --------------------------------------------------------
 
+    st.subheader(
+        "Grafik Davies-Bouldin Index"
+    )
+
     fig = px.line(
-        df_dbi,
+        hasil_dbi,
         x="K",
         y="DBI",
         markers=True,
-        title="Davies-Bouldin Index untuk Menentukan K Optimal"
+        title="Nilai DBI untuk K = 2 sampai K = 10"
     )
 
     fig.update_layout(
         xaxis_title="Jumlah Cluster (K)",
-        yaxis_title="Nilai DBI",
+        yaxis_title="Nilai Davies-Bouldin Index (DBI)",
         xaxis=dict(
             tickmode="linear",
             dtick=1
         )
     )
 
-    # --------------------------------------------------------
-    # TANDA K OPTIMAL
-    # --------------------------------------------------------
-
+    # Menandai K optimal
     fig.add_scatter(
         x=[k_optimal],
         y=[dbi_terbaik],
@@ -327,8 +341,12 @@ elif menu == "K optimal DBI":
     )
 
     # --------------------------------------------------------
-    # HASIL OTOMATIS
+    # HASIL K OPTIMAL
     # --------------------------------------------------------
+
+    st.subheader(
+        "Hasil Penentuan K Optimal"
+    )
 
     col1, col2 = st.columns(2)
 
@@ -342,14 +360,16 @@ elif menu == "K optimal DBI":
     with col2:
 
         st.metric(
-            "DBI Terbaik",
+            "DBI Terkecil",
             f"{dbi_terbaik:.4f}"
         )
 
     st.success(
-        f"Berdasarkan nilai DBI terkecil, "
-        f"K optimal adalah **{k_optimal}** "
-        f"dengan nilai DBI **{dbi_terbaik:.4f}**."
+        f"Berdasarkan grafik dan tabel DBI, "
+        f"nilai DBI terkecil adalah {dbi_terbaik:.4f} "
+        f"pada K = {k_optimal}. "
+        f"Oleh karena itu, K = {k_optimal} dipilih "
+        f"sebagai jumlah cluster optimal."
     )
 
     # --------------------------------------------------------
@@ -357,11 +377,11 @@ elif menu == "K optimal DBI":
     # --------------------------------------------------------
 
     st.subheader(
-        "Tabel Nilai DBI"
+        "Tabel Hasil Perhitungan DBI"
     )
 
     st.dataframe(
-        df_dbi,
+        hasil_dbi,
         use_container_width=True,
         hide_index=True
     )
@@ -378,9 +398,8 @@ elif menu == "Hasil Clustering":
     )
 
     st.write(
-        f"Hasil pengelompokan kabupaten/kota "
-        f"menggunakan K-Means dengan "
-        f"K optimal = {k_optimal}."
+        f"Hasil clustering menggunakan algoritma "
+        f"K-Means dengan K optimal = {k_optimal}."
     )
 
     cluster_pilih = st.selectbox(
@@ -399,8 +418,8 @@ elif menu == "Hasil Clustering":
     )
 
     st.write(
-        f"Jumlah anggota: "
-        f"**{len(data_cluster)} kabupaten/kota**"
+        f"Jumlah anggota: **{len(data_cluster)} "
+        f"kabupaten/kota**"
     )
 
     st.dataframe(
@@ -421,22 +440,16 @@ elif menu == "Peta Clustering":
     )
 
     st.write(
-        "Peta menunjukkan distribusi cluster "
-        "kabupaten/kota di Provinsi Sumatera Barat."
+        f"Peta distribusi hasil clustering "
+        f"K-Means dengan K optimal = {k_optimal}."
     )
 
-    # --------------------------------------------------------
-    # SALIN GEOJSON
-    # --------------------------------------------------------
-
+    # Salin GeoJSON
     peta_tampil = json.loads(
         json.dumps(peta)
     )
 
-    # --------------------------------------------------------
-    # DATA CLUSTER
-    # --------------------------------------------------------
-
+    # Data wilayah dan cluster
     data_peta = data[
         ["Kabupaten/Kota", "Cluster"]
     ].copy()
@@ -446,10 +459,7 @@ elif menu == "Peta Clustering":
         errors="coerce"
     )
 
-    # --------------------------------------------------------
-    # SESUAIKAN NAMA SAWAHLUNTO
-    # --------------------------------------------------------
-
+    # Penyesuaian nama
     data_peta["Kabupaten/Kota"] = (
         data_peta["Kabupaten/Kota"]
         .replace(
@@ -458,10 +468,7 @@ elif menu == "Peta Clustering":
         )
     )
 
-    # --------------------------------------------------------
-    # MASUKKAN CLUSTER KE GEOJSON
-    # --------------------------------------------------------
-
+    # Memasukkan cluster ke GeoJSON
     for feature in peta_tampil.get(
         "features",
         []
@@ -493,10 +500,7 @@ elif menu == "Peta Clustering":
 
         feature["properties"] = properties
 
-    # --------------------------------------------------------
-    # PETA
-    # --------------------------------------------------------
-
+    # Membuat peta
     try:
 
         fig = px.choropleth_map(
@@ -535,11 +539,6 @@ elif menu == "Peta Clustering":
             "Peta belum dapat ditampilkan."
         )
 
-        st.write(
-            "Terjadi masalah pada GeoJSON "
-            "atau nama wilayah."
-        )
-
         st.code(
             str(e)
         )
@@ -556,8 +555,8 @@ elif menu == "Centroid":
     )
 
     st.write(
-        "Nilai centroid menunjukkan rata-rata "
-        "nilai indikator pada masing-masing cluster."
+        f"Centroid hasil clustering dengan "
+        f"K optimal = {k_optimal}."
     )
 
     st.dataframe(
@@ -567,6 +566,7 @@ elif menu == "Centroid":
     )
 
     st.info(
-        "Centroid digunakan untuk melihat "
-        "karakteristik masing-masing cluster."
+        "Nilai centroid menunjukkan karakteristik "
+        "masing-masing cluster berdasarkan "
+        "sembilan indikator sosial ekonomi."
     )
