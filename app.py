@@ -160,7 +160,7 @@ menu = st.sidebar.radio(
     "Pilih halaman:",
     [
         "Beranda",
-        ""Penentuan K Optimal",
+        "Penentuan K Optimal",
         "Hasil Clustering",
         "Peta Clustering",
         "Centroid"
@@ -264,13 +264,13 @@ if menu == "Beranda":
 
 
 # ============================================================
-# EVALUASI DBI
+# K optimal DBI
 # ============================================================
 
-elif menu == "Evaluasi DBI":
+elif menu == "K optimal DBI":
 
     st.header(
-        "📈 Evaluasi Davies-Bouldin Index"
+        "📈 K optimal dengan Davies-Bouldin Index"
     )
 
     st.write(
