@@ -26,6 +26,11 @@ def load_data():
         "centroid_cluster_dbi.xlsx"
     )
 
+    # Membaca hasil DBI K=2 sampai K=10
+    df_dbi = pd.read_excel(
+        "hasil_dbi.xlsx"
+    )
+
     with open(
         "hasil_cluster_peta_dbi.geojson",
         "r",
@@ -33,37 +38,24 @@ def load_data():
     ) as f:
         peta = json.load(f)
 
-    return data, centroid, peta
+    return data, centroid, df_dbi, peta
 
 
-data, centroid, peta = load_data()
-
+data, centroid, df_dbi, peta = load_data()
 # ============================================================
-# INFORMASI HASIL DBI
 # ============================================================
-
-k_optimal = 3
-dbi_terbaik = 0.6041
-
-# ============================================================
-# JUDUL DASHBOARD
+# MENENTUKAN K OPTIMAL SECARA OTOMATIS
 # ============================================================
 
-st.title("📊 Dashboard Klasterisasi Sosial Ekonomi")
+idx_min = df_dbi["DBI"].idxmin()
 
-st.subheader(
-    "Provinsi Sumatera Barat Menggunakan K-Means "
-    "dan Davies-Bouldin Index (DBI)"
+k_optimal = int(
+    df_dbi.loc[idx_min, "K"]
 )
 
-st.markdown(
-    """
-    Dashboard ini menyajikan hasil klasterisasi 19 kabupaten/kota
-    di Provinsi Sumatera Barat berdasarkan 9 indikator sosial ekonomi
-    menggunakan algoritma K-Means.
-    """
+dbi_terbaik = float(
+    df_dbi.loc[idx_min, "DBI"]
 )
-
 # ============================================================
 # SIDEBAR
 # ============================================================
