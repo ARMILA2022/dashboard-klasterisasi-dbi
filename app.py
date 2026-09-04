@@ -435,9 +435,7 @@ elif menu == "Hasil Clustering":
 
 elif menu == "Peta Clustering":
 
-    st.header(
-        "🗺️ Peta Hasil Clustering"
-    )
+    st.header("🗺️ Peta Hasil Clustering")
 
     st.write(
         f"Peta distribusi hasil clustering "
@@ -454,12 +452,13 @@ elif menu == "Peta Clustering":
         ["Kabupaten/Kota", "Cluster"]
     ].copy()
 
+    # Pastikan Cluster berupa angka
     data_peta["Cluster"] = pd.to_numeric(
         data_peta["Cluster"],
         errors="coerce"
     )
 
-    # Penyesuaian nama
+    # Samakan nama dengan shapefile
     data_peta["Kabupaten/Kota"] = (
         data_peta["Kabupaten/Kota"]
         .replace(
@@ -468,11 +467,8 @@ elif menu == "Peta Clustering":
         )
     )
 
-    # Memasukkan cluster ke GeoJSON
-    for feature in peta_tampil.get(
-        "features",
-        []
-    ):
+    # Masukkan cluster ke GeoJSON
+    for feature in peta_tampil["features"]:
 
         properties = feature.get(
             "properties",
@@ -490,30 +486,47 @@ elif menu == "Peta Clustering":
 
         if not hasil.empty:
 
-            properties["Cluster"] = int(
-                hasil.iloc[0]["Cluster"]
+            properties["Cluster"] = str(
+                int(hasil.iloc[0]["Cluster"])
             )
 
         else:
 
-            properties["Cluster"] = 0
+            properties["Cluster"] = "Tidak Ada"
 
         feature["properties"] = properties
 
-    # Membuat peta
+    # Jadikan Cluster sebagai kategori
+    data_peta["Cluster"] = (
+        data_peta["Cluster"]
+        .astype(int)
+        .astype(str)
+    )
+
     try:
 
-       data_peta["Cluster"] = data_peta["Cluster"].astype(str)
-
-data_peta["Cluster"] = data_peta["Cluster"].astype(str)
-
-fig = px.choropleth_map(
-    data_peta,
-    geojson=peta_tampil,
-    locations="Kabupaten/Kota",
-    featureidkey="properties.nama",
-    color="Cluster",
-)
+        fig = px.choropleth_map(
+            data_peta,
+            geojson=peta_tampil,
+            locations="Kabupaten/Kota",
+            featureidkey="properties.nama",
+            color="Cluster",
+            hover_name="Kabupaten/Kota",
+            map_style="carto-positron",
+            center={
+                "lat": -0.7399,
+                "lon": 100.8000
+            },
+            zoom=6,
+            opacity=0.7,
+            category_orders={
+                "Cluster": [
+                    "1",
+                    "2",
+                    "3"
+                ]
+            }
+        )
 
         fig.update_layout(
             margin=dict(
@@ -521,7 +534,8 @@ fig = px.choropleth_map(
                 t=0,
                 l=0,
                 b=0
-            )
+            ),
+            legend_title_text="Cluster"
         )
 
         st.plotly_chart(
