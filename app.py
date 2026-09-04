@@ -140,13 +140,14 @@ st.title(
 
 st.subheader(
     "Provinsi Sumatera Barat Menggunakan K-Means "
-    "dan Davies-Bouldin Index (DBI)"
+    
 )
 
 st.write(
     "Dashboard ini menyajikan hasil klasterisasi "
     "kabupaten/kota di Provinsi Sumatera Barat "
-    "berdasarkan indikator sosial ekonomi."
+    "berdasarkan indikator sosial ekonomi menggunakan "
+    "algoritma K-Means."
 )
 
 
