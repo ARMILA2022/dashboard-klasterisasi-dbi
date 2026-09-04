@@ -510,7 +510,12 @@ elif menu == "Peta Clustering":
             geojson=peta_tampil,
             locations="Kabupaten/Kota",
             featureidkey="properties.nama",
-            color="Cluster",
+           color="Cluster",
+           color_discrete_map={
+           "1": "green",
+           "2": "yellow",
+          "3": "red"
+},
             hover_name="Kabupaten/Kota",
             map_style="carto-positron",
             center={
