@@ -45,9 +45,12 @@ def load_data():
         "centroid_cluster_dbi.xlsx"
     )
 
-    peta = gpd.read_file(
-        "hasil_cluster_peta_dbi.geojson"
-    )
+    with open(
+        "hasil_cluster_peta_dbi.geojson",
+        "r",
+        encoding="utf-8"
+    ) as f:
+        peta = json.load(f)
 
     return data, centroid, peta
 
@@ -198,8 +201,7 @@ elif menu == "Peta Clustering":
     )
 
     # Pastikan nama kolom cluster numerik
-    peta["Cluster"] = peta["Cluster"].astype(int)
-
+    ppeta["Cluster"] = peta["Cluster"].astype(int)
     # Plot menggunakan Plotly
     fig = px.choropleth_mapbox(
         peta,
