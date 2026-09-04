@@ -505,6 +505,8 @@ elif menu == "Peta Clustering":
 
        data_peta["Cluster"] = data_peta["Cluster"].astype(str)
 
+data_peta["Cluster"] = data_peta["Cluster"].astype(str)
+
 fig = px.choropleth_map(
     data_peta,
     geojson=peta_tampil,
