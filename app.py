@@ -231,21 +231,21 @@ elif menu == "Peta Clustering":
             feature["properties"]["Cluster"] = 0
 
     # Membuat peta
-    fig = px.choropleth_mapbox(
-        data_peta,
-        geojson=peta,
-        locations="Kabupaten/Kota",
-        featureidkey="properties.nama",
-        color="Cluster",
-        hover_name="Kabupaten/Kota",
-        mapbox_style="carto-positron",
-        center={
-            "lat": -0.7399,
-            "lon": 100.8000
-        },
-        zoom=6,
-        opacity=0.7
-    )
+   fig = px.choropleth_map(
+    data_peta,
+    geojson=peta,
+    locations="Kabupaten/Kota",
+    featureidkey="properties.nama",
+    color="Cluster",
+    hover_name="Kabupaten/Kota",
+    map_style="carto-positron",
+    center={
+        "lat": -0.7399,
+        "lon": 100.8000
+    },
+    zoom=6,
+    opacity=0.7
+)
 
     st.plotly_chart(
         fig,
