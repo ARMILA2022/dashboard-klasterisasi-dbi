@@ -503,21 +503,15 @@ elif menu == "Peta Clustering":
     # Membuat peta
     try:
 
-        fig = px.choropleth_map(
-            data_peta,
-            geojson=peta_tampil,
-            locations="Kabupaten/Kota",
-            featureidkey="properties.nama",
-            color="Cluster",
-            hover_name="Kabupaten/Kota",
-            map_style="carto-positron",
-            center={
-                "lat": -0.7399,
-                "lon": 100.8000
-            },
-            zoom=6,
-            opacity=0.7
-        )
+       data_peta["Cluster"] = data_peta["Cluster"].astype(str)
+
+fig = px.choropleth_map(
+    data_peta,
+    geojson=peta_tampil,
+    locations="Kabupaten/Kota",
+    featureidkey="properties.nama",
+    color="Cluster",
+)
 
         fig.update_layout(
             margin=dict(
