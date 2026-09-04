@@ -188,6 +188,7 @@ elif menu == "Hasil Clustering":
     )
 
 # ============================================================
+# ============================================================
 # PETA CLUSTERING
 # ============================================================
 
@@ -200,16 +201,43 @@ elif menu == "Peta Clustering":
         "di Provinsi Sumatera Barat."
     )
 
-    # Pastikan nama kolom cluster numerik
-    ppeta["Cluster"] = peta["Cluster"].astype(int)
-    # Plot menggunakan Plotly
+    # Membuat DataFrame dari data clustering
+    data_peta = data[
+        ["Kabupaten/Kota", "Cluster"]
+    ].copy()
+
+    data_peta["Cluster"] = data_peta["Cluster"].astype(int)
+
+    # Gabungkan informasi cluster ke setiap wilayah GeoJSON
+    for feature in peta["features"]:
+
+        nama_wilayah = feature["properties"].get("nama")
+
+        # Menyesuaikan nama Kota Sawahlunto
+        if nama_wilayah == "Kota Sawahlunto":
+            nama_cari = "Kota Sawah Lunto"
+        else:
+            nama_cari = nama_wilayah
+
+        hasil = data_peta[
+            data_peta["Kabupaten/Kota"] == nama_cari
+        ]
+
+        if not hasil.empty:
+            feature["properties"]["Cluster"] = int(
+                hasil.iloc[0]["Cluster"]
+            )
+        else:
+            feature["properties"]["Cluster"] = 0
+
+    # Membuat peta
     fig = px.choropleth_mapbox(
-        peta,
-        geojson=peta.__geo_interface__,
-        locations="nama",
+        data_peta,
+        geojson=peta,
+        locations="Kabupaten/Kota",
         featureidkey="properties.nama",
         color="Cluster",
-        hover_name="nama",
+        hover_name="Kabupaten/Kota",
         mapbox_style="carto-positron",
         center={
             "lat": -0.7399,
@@ -223,7 +251,6 @@ elif menu == "Peta Clustering":
         fig,
         use_container_width=True
     )
-
 # ============================================================
 # CENTROID
 # ============================================================
