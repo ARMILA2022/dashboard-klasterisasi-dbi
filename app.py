@@ -519,10 +519,10 @@ elif menu == "Peta Clustering":
             hover_name="Kabupaten/Kota",
             map_style="carto-positron",
             center={
-                "lat": -0.7399,
-                "lon": 100.8000
+                "lat": -1.0,
+                "lon": 100.2
             },
-            zoom=6,
+            zoom=5.5,
             opacity=0.7,
             category_orders={
                 "Cluster": [
