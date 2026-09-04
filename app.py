@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -12,24 +11,6 @@ st.set_page_config(
     page_title="Dashboard Klasterisasi DBI Sumatera Barat",
     page_icon="📊",
     layout="wide"
-)
-
-# ============================================================
-# JUDUL
-# ============================================================
-
-st.title("📊 Dashboard Klasterisasi Sosial Ekonomi")
-st.subheader(
-    "Provinsi Sumatera Barat Menggunakan K-Means "
-    "dan Davies-Bouldin Index (DBI)"
-)
-
-st.markdown(
-    """
-    Dashboard ini menyajikan hasil klasterisasi 19 kabupaten/kota
-    di Provinsi Sumatera Barat berdasarkan 9 indikator sosial ekonomi
-    menggunakan algoritma K-Means.
-    """
 )
 
 # ============================================================
@@ -63,6 +44,25 @@ data, centroid, peta = load_data()
 
 k_optimal = 3
 dbi_terbaik = 0.6041
+
+# ============================================================
+# JUDUL DASHBOARD
+# ============================================================
+
+st.title("📊 Dashboard Klasterisasi Sosial Ekonomi")
+
+st.subheader(
+    "Provinsi Sumatera Barat Menggunakan K-Means "
+    "dan Davies-Bouldin Index (DBI)"
+)
+
+st.markdown(
+    """
+    Dashboard ini menyajikan hasil klasterisasi 19 kabupaten/kota
+    di Provinsi Sumatera Barat berdasarkan 9 indikator sosial ekonomi
+    menggunakan algoritma K-Means.
+    """
+)
 
 # ============================================================
 # SIDEBAR
@@ -99,13 +99,13 @@ if menu == "Beranda":
     with col2:
         st.metric(
             "K Optimal",
-            "3"
+            str(k_optimal)
         )
 
     with col3:
         st.metric(
             "Nilai DBI",
-            "0.6041"
+            f"{dbi_terbaik:.4f}"
         )
 
     with col4:
@@ -150,6 +150,11 @@ if menu == "Beranda":
             title="Jumlah Kabupaten/Kota per Cluster"
         )
 
+        fig.update_layout(
+            xaxis_title="Cluster",
+            yaxis_title="Jumlah Kabupaten/Kota"
+        )
+
         st.plotly_chart(
             fig,
             use_container_width=True
@@ -165,7 +170,7 @@ elif menu == "Hasil Clustering":
 
     st.write(
         "Hasil pengelompokan kabupaten/kota berdasarkan "
-        "K-Means dengan K optimal = 3."
+        "algoritma K-Means dengan K optimal = 3."
     )
 
     cluster_pilih = st.selectbox(
@@ -175,10 +180,14 @@ elif menu == "Hasil Clustering":
 
     data_cluster = data[
         data["Cluster"] == cluster_pilih
-    ]
+    ].copy()
 
     st.write(
         f"### Anggota Cluster {cluster_pilih}"
+    )
+
+    st.write(
+        f"Jumlah anggota: **{len(data_cluster)} kabupaten/kota**"
     )
 
     st.dataframe(
@@ -187,7 +196,6 @@ elif menu == "Hasil Clustering":
         hide_index=True
     )
 
-# ============================================================
 # ============================================================
 # PETA CLUSTERING
 # ============================================================
@@ -201,19 +209,42 @@ elif menu == "Peta Clustering":
         "di Provinsi Sumatera Barat."
     )
 
-    # Membuat DataFrame dari data clustering
+    # --------------------------------------------------------
+    # Membuat salinan GeoJSON
+    # --------------------------------------------------------
+
+    peta_tampil = json.loads(
+        json.dumps(peta)
+    )
+
+    # --------------------------------------------------------
+    # Data cluster
+    # --------------------------------------------------------
+
     data_peta = data[
         ["Kabupaten/Kota", "Cluster"]
     ].copy()
 
-    data_peta["Cluster"] = data_peta["Cluster"].astype(int)
+    data_peta["Cluster"] = (
+        data_peta["Cluster"]
+        .astype(int)
+    )
 
-    # Gabungkan informasi cluster ke setiap wilayah GeoJSON
-    for feature in peta["features"]:
+    # --------------------------------------------------------
+    # Memasukkan nilai cluster ke GeoJSON
+    # --------------------------------------------------------
 
-        nama_wilayah = feature["properties"].get("nama")
+    for feature in peta_tampil["features"]:
 
-        # Menyesuaikan nama Kota Sawahlunto
+        properties = feature.get(
+            "properties",
+            {}
+        )
+
+        nama_wilayah = properties.get(
+            "nama"
+        )
+
         if nama_wilayah == "Kota Sawahlunto":
             nama_cari = "Kota Sawah Lunto"
         else:
@@ -224,33 +255,78 @@ elif menu == "Peta Clustering":
         ]
 
         if not hasil.empty:
-            feature["properties"]["Cluster"] = int(
+
+            properties["Cluster"] = int(
                 hasil.iloc[0]["Cluster"]
             )
+
         else:
-            feature["properties"]["Cluster"] = 0
 
-    # Membuat peta
-   fig = px.choropleth_map(
-    data_peta,
-    geojson=peta,
-    locations="Kabupaten/Kota",
-    featureidkey="properties.nama",
-    color="Cluster",
-    hover_name="Kabupaten/Kota",
-    map_style="carto-positron",
-    center={
-        "lat": -0.7399,
-        "lon": 100.8000
-    },
-    zoom=6,
-    opacity=0.7
-)
+            properties["Cluster"] = 0
 
-    st.plotly_chart(
-        fig,
-        use_container_width=True
+        feature["properties"] = properties
+
+    # --------------------------------------------------------
+    # Data untuk Plotly
+    # --------------------------------------------------------
+
+    data_peta["Kabupaten/Kota"] = (
+        data_peta["Kabupaten/Kota"]
+        .replace(
+            "Kota Sawah Lunto",
+            "Kota Sawahlunto"
+        )
     )
+
+    # --------------------------------------------------------
+    # Membuat peta
+    # --------------------------------------------------------
+
+    try:
+
+        fig = px.choropleth_map(
+            data_peta,
+            geojson=peta_tampil,
+            locations="Kabupaten/Kota",
+            featureidkey="properties.nama",
+            color="Cluster",
+            hover_name="Kabupaten/Kota",
+            map_style="carto-positron",
+            center={
+                "lat": -0.7399,
+                "lon": 100.8000
+            },
+            zoom=6,
+            opacity=0.7
+        )
+
+        fig.update_layout(
+            margin={
+                "r": 0,
+                "t": 0,
+                "l": 0,
+                "b": 0
+            }
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
+
+    except Exception as e:
+
+        st.error(
+            "Peta belum dapat ditampilkan."
+        )
+
+        st.write(
+            "Periksa kesesuaian nama wilayah pada "
+            "file GeoJSON dengan data clustering."
+        )
+
+        st.code(str(e))
+
 # ============================================================
 # CENTROID
 # ============================================================
