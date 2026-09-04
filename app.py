@@ -160,7 +160,7 @@ menu = st.sidebar.radio(
     "Pilih halaman:",
     [
         "Beranda",
-        ""Penentuan K Optimal dengan metode DBI",
+        ""Penentuan K Optimal",
         "Hasil Clustering",
         "Peta Clustering",
         "Centroid"
