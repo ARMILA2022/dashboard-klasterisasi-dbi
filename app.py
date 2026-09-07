@@ -435,19 +435,27 @@ elif menu == "Hasil Clustering":
 
 elif menu == "Peta Clustering":
 
-    st.header("🗺️ Peta Hasil Clustering")
+    st.header(
+        "🗺️ Peta Hasil Clustering"
+    )
 
     st.write(
         f"Peta distribusi hasil clustering "
         f"K-Means dengan K optimal = {k_optimal}."
     )
 
-    # Salin GeoJSON
+    # --------------------------------------------------------
+    # SALIN GEOJSON
+    # --------------------------------------------------------
+
     peta_tampil = json.loads(
         json.dumps(peta)
     )
 
-    # Data wilayah dan cluster
+    # --------------------------------------------------------
+    # DATA WILAYAH DAN CLUSTER
+    # --------------------------------------------------------
+
     data_peta = data[
         ["Kabupaten/Kota", "Cluster"]
     ].copy()
@@ -458,7 +466,10 @@ elif menu == "Peta Clustering":
         errors="coerce"
     )
 
-    # Samakan nama dengan shapefile
+    # --------------------------------------------------------
+    # SAMAKAN NAMA WILAYAH
+    # --------------------------------------------------------
+
     data_peta["Kabupaten/Kota"] = (
         data_peta["Kabupaten/Kota"]
         .replace(
@@ -467,7 +478,10 @@ elif menu == "Peta Clustering":
         )
     )
 
-    # Masukkan cluster ke GeoJSON
+    # --------------------------------------------------------
+    # MASUKKAN CLUSTER KE GEOJSON
+    # --------------------------------------------------------
+
     for feature in peta_tampil["features"]:
 
         properties = feature.get(
@@ -480,14 +494,15 @@ elif menu == "Peta Clustering":
         )
 
         hasil = data_peta[
-            data_peta["Kabupaten/Kota"]
-            == nama_wilayah
+            data_peta["Kabupaten/Kota"] == nama_wilayah
         ]
 
         if not hasil.empty:
 
             properties["Cluster"] = str(
-                int(hasil.iloc[0]["Cluster"])
+                int(
+                    hasil.iloc[0]["Cluster"]
+                )
             )
 
         else:
@@ -496,19 +511,52 @@ elif menu == "Peta Clustering":
 
         feature["properties"] = properties
 
+    # --------------------------------------------------------
+    # BUAT DATA UNTUK PETA
+    # --------------------------------------------------------
+
+    # Ambil nama wilayah dari GeoJSON
+    nama_geojson = []
+
+    for feature in peta_tampil["features"]:
+
+        nama_geojson.append(
+            feature.get(
+                "properties",
+                {}
+            ).get("nama")
+        )
+
+    # Buat tabel khusus peta
+    data_peta_map = pd.DataFrame(
+        {
+            "Kabupaten/Kota": nama_geojson
+        }
+    )
+
+    # Gabungkan dengan data cluster
+    data_peta_map = data_peta_map.merge(
+        data_peta,
+        on="Kabupaten/Kota",
+        how="left"
+    )
+
     # Jadikan Cluster sebagai kategori
-    data_peta["Cluster"] = (
-        data_peta["Cluster"]
+    data_peta_map["Cluster"] = (
+        data_peta_map["Cluster"]
+        .fillna(0)
         .astype(int)
         .astype(str)
     )
 
+    # --------------------------------------------------------
+    # TAMPILKAN PETA
+    # --------------------------------------------------------
+
     try:
 
-          try:
-
         fig = px.choropleth_map(
-            data_peta,
+            data_peta_map,
             geojson=peta_tampil,
             locations="Kabupaten/Kota",
             featureidkey="properties.nama",
@@ -541,20 +589,6 @@ elif menu == "Peta Clustering":
             legend_title_text="Cluster"
         )
 
-        st.plotly_chart(
-            fig,
-            use_container_width=True
-        )
-
-    except Exception as e:
-
-        st.error(
-            "Peta belum dapat ditampilkan."
-        )
-
-        st.code(
-            str(e)
-        )
         st.plotly_chart(
             fig,
             use_container_width=True
