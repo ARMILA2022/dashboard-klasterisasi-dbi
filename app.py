@@ -563,14 +563,14 @@ elif menu == "Peta Clustering":
         .astype(str)
     )
 
-    # --------------------------------------------------------
-    # PETA
-    # --------------------------------------------------------
+       # ========================================================
+    # PETA CLUSTERING
+    # ========================================================
 
     try:
 
         fig = px.choropleth_map(
-            data_peta_map,
+            data_peta,
             geojson=peta_tampil,
             locations="Kabupaten/Kota",
             featureidkey="properties.nama",
@@ -578,8 +578,7 @@ elif menu == "Peta Clustering":
             color_discrete_map={
                 "1": "green",
                 "2": "yellow",
-                "3": "red",
-                "0": "lightgray"
+                "3": "red"
             },
             hover_name="Kabupaten/Kota",
             map_style="carto-positron",
@@ -593,8 +592,7 @@ elif menu == "Peta Clustering":
                 "Cluster": [
                     "1",
                     "2",
-                    "3",
-                    "0"
+                    "3"
                 ]
             }
         )
@@ -623,8 +621,6 @@ elif menu == "Peta Clustering":
         st.code(
             str(e)
         )
-
-
 # ============================================================
 # CENTROID
 # ============================================================
