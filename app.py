@@ -294,10 +294,6 @@ elif menu == "Penentuan K Optimal":
 
     st.divider()
 
-    # --------------------------------------------------------
-    # GRAFIK DBI
-    # --------------------------------------------------------
-
     st.subheader(
         "Grafik Davies-Bouldin Index"
     )
@@ -319,7 +315,6 @@ elif menu == "Penentuan K Optimal":
         )
     )
 
-    # Menandai K optimal
     fig.add_scatter(
         x=[k_optimal],
         y=[dbi_terbaik],
@@ -339,10 +334,6 @@ elif menu == "Penentuan K Optimal":
         fig,
         use_container_width=True
     )
-
-    # --------------------------------------------------------
-    # HASIL K OPTIMAL
-    # --------------------------------------------------------
 
     st.subheader(
         "Hasil Penentuan K Optimal"
@@ -371,10 +362,6 @@ elif menu == "Penentuan K Optimal":
         f"Oleh karena itu, K = {k_optimal} dipilih "
         f"sebagai jumlah cluster optimal."
     )
-
-    # --------------------------------------------------------
-    # TABEL DBI
-    # --------------------------------------------------------
 
     st.subheader(
         "Tabel Hasil Perhitungan DBI"
@@ -460,15 +447,20 @@ elif menu == "Peta Clustering":
         ["Kabupaten/Kota", "Cluster"]
     ].copy()
 
-    # Pastikan Cluster berupa angka
     data_peta["Cluster"] = pd.to_numeric(
         data_peta["Cluster"],
         errors="coerce"
     )
 
     # --------------------------------------------------------
-    # SAMAKAN NAMA WILAYAH
+    # MENYAMAKAN NAMA WILAYAH
     # --------------------------------------------------------
+
+    data_peta["Kabupaten/Kota"] = (
+        data_peta["Kabupaten/Kota"]
+        .astype(str)
+        .str.strip()
+    )
 
     data_peta["Kabupaten/Kota"] = (
         data_peta["Kabupaten/Kota"]
@@ -493,6 +485,12 @@ elif menu == "Peta Clustering":
             "nama"
         )
 
+        if nama_wilayah is not None:
+
+            nama_wilayah = str(
+                nama_wilayah
+            ).strip()
+
         hasil = data_peta[
             data_peta["Kabupaten/Kota"] == nama_wilayah
         ]
@@ -512,36 +510,52 @@ elif menu == "Peta Clustering":
         feature["properties"] = properties
 
     # --------------------------------------------------------
-    # BUAT DATA UNTUK PETA
+    # DATA KHUSUS UNTUK PETA
     # --------------------------------------------------------
 
-    # Ambil nama wilayah dari GeoJSON
     nama_geojson = []
 
     for feature in peta_tampil["features"]:
 
-        nama_geojson.append(
-            feature.get(
-                "properties",
-                {}
-            ).get("nama")
+        properties = feature.get(
+            "properties",
+            {}
         )
 
-    # Buat tabel khusus peta
+        nama_geojson.append(
+            properties.get("nama")
+        )
+
     data_peta_map = pd.DataFrame(
         {
             "Kabupaten/Kota": nama_geojson
         }
     )
 
-    # Gabungkan dengan data cluster
+    data_peta_map["Kabupaten/Kota"] = (
+        data_peta_map["Kabupaten/Kota"]
+        .astype(str)
+        .str.strip()
+    )
+
+    data_peta_map["Kabupaten/Kota"] = (
+        data_peta_map["Kabupaten/Kota"]
+        .replace(
+            "Kota Sawah Lunto",
+            "Kota Sawahlunto"
+        )
+    )
+
     data_peta_map = data_peta_map.merge(
         data_peta,
         on="Kabupaten/Kota",
         how="left"
     )
 
-    # Jadikan Cluster sebagai kategori
+    # --------------------------------------------------------
+    # CLUSTER SEBAGAI KATEGORI
+    # --------------------------------------------------------
+
     data_peta_map["Cluster"] = (
         data_peta_map["Cluster"]
         .fillna(0)
@@ -550,7 +564,7 @@ elif menu == "Peta Clustering":
     )
 
     # --------------------------------------------------------
-    # TAMPILKAN PETA
+    # PETA
     # --------------------------------------------------------
 
     try:
@@ -564,17 +578,23 @@ elif menu == "Peta Clustering":
             color_discrete_map={
                 "1": "green",
                 "2": "yellow",
-                "3": "red"
+                "3": "red",
+                "0": "lightgray"
             },
             hover_name="Kabupaten/Kota",
             map_style="carto-positron",
-            fitbounds="locations",
+            center={
+                "lat": -1.3,
+                "lon": 99.8
+            },
+            zoom=4.5,
             opacity=0.7,
             category_orders={
                 "Cluster": [
                     "1",
                     "2",
-                    "3"
+                    "3",
+                    "0"
                 ]
             }
         )
