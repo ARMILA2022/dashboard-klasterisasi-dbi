@@ -422,46 +422,37 @@ elif menu == "Hasil Clustering":
 
 elif menu == "Peta Clustering":
 
-    st.header(
-        "🗺️ Peta Hasil Clustering"
-    )
+    st.header("🗺️ Peta Hasil Clustering")
 
     st.write(
-        f"Peta distribusi hasil clustering "
-        f"K-Means dengan K optimal = {k_optimal}."
+        f"Peta distribusi hasil clustering K-Means "
+        f"dengan K optimal = {k_optimal}."
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # SALIN GEOJSON
-    # --------------------------------------------------------
+    # ========================================================
 
     peta_tampil = json.loads(
         json.dumps(peta)
     )
 
-    # --------------------------------------------------------
-    # DATA WILAYAH DAN CLUSTER
-    # --------------------------------------------------------
+    # ========================================================
+    # DATA CLUSTER
+    # ========================================================
 
     data_peta = data[
         ["Kabupaten/Kota", "Cluster"]
     ].copy()
 
-    data_peta["Cluster"] = pd.to_numeric(
-        data_peta["Cluster"],
-        errors="coerce"
-    )
-
-    # --------------------------------------------------------
-    # MENYAMAKAN NAMA WILAYAH
-    # --------------------------------------------------------
-
+    # Bersihkan nama wilayah
     data_peta["Kabupaten/Kota"] = (
         data_peta["Kabupaten/Kota"]
         .astype(str)
         .str.strip()
     )
 
+    # Samakan nama Sawahlunto
     data_peta["Kabupaten/Kota"] = (
         data_peta["Kabupaten/Kota"]
         .replace(
@@ -470,9 +461,23 @@ elif menu == "Peta Clustering":
         )
     )
 
-    # --------------------------------------------------------
-    # MASUKKAN CLUSTER KE GEOJSON
-    # --------------------------------------------------------
+    # ========================================================
+    # PENTING:
+    # CLUSTER DIUBAH MENJADI KATEGORI / STRING
+    # ========================================================
+
+    data_peta["Cluster"] = (
+        pd.to_numeric(
+            data_peta["Cluster"],
+            errors="coerce"
+        )
+        .astype("Int64")
+        .astype(str)
+    )
+
+    # ========================================================
+    # MEMASUKKAN CLUSTER KE GEOJSON
+    # ========================================================
 
     for feature in peta_tampil["features"]:
 
@@ -482,25 +487,27 @@ elif menu == "Peta Clustering":
         )
 
         nama_wilayah = properties.get(
-            "nama"
+            "nama",
+            ""
         )
 
-        if nama_wilayah is not None:
+        nama_wilayah = str(
+            nama_wilayah
+        ).strip()
 
-            nama_wilayah = str(
-                nama_wilayah
-            ).strip()
+        # Samakan nama Sawahlunto
+        if nama_wilayah == "Kota Sawah Lunto":
+            nama_wilayah = "Kota Sawahlunto"
 
         hasil = data_peta[
-            data_peta["Kabupaten/Kota"] == nama_wilayah
+            data_peta["Kabupaten/Kota"]
+            == nama_wilayah
         ]
 
         if not hasil.empty:
 
-            properties["Cluster"] = str(
-                int(
-                    hasil.iloc[0]["Cluster"]
-                )
+            properties["Cluster"] = (
+                hasil.iloc[0]["Cluster"]
             )
 
         else:
@@ -508,6 +515,85 @@ elif menu == "Peta Clustering":
             properties["Cluster"] = "Tidak Ada"
 
         feature["properties"] = properties
+
+    # ========================================================
+    # DATA UNTUK PETA
+    # ========================================================
+
+    data_peta_map = data_peta.copy()
+
+    # ========================================================
+    # WARNA CLUSTER
+    # ========================================================
+
+    warna_cluster = {
+        "1": "green",
+        "2": "yellow",
+        "3": "red"
+    }
+
+    # ========================================================
+    # BUAT PETA
+    # ========================================================
+
+    try:
+
+        fig = px.choropleth_map(
+            data_peta_map,
+            geojson=peta_tampil,
+            locations="Kabupaten/Kota",
+            featureidkey="properties.nama",
+            color="Cluster",
+
+            color_discrete_map=warna_cluster,
+
+            category_orders={
+                "Cluster": [
+                    "1",
+                    "2",
+                    "3"
+                ]
+            },
+
+            hover_name="Kabupaten/Kota",
+
+            map_style="carto-positron",
+
+            center={
+                "lat": -1.3,
+                "lon": 99.8
+            },
+
+            zoom=4.5,
+
+            opacity=0.75
+        )
+
+        fig.update_layout(
+            margin=dict(
+                r=0,
+                t=0,
+                l=0,
+                b=0
+            ),
+
+            legend_title_text="Cluster"
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
+
+    except Exception as e:
+
+        st.error(
+            "Peta belum dapat ditampilkan."
+        )
+
+        st.code(
+            str(e)
+        )
 
     # --------------------------------------------------------
     # DATA KHUSUS UNTUK PETA
