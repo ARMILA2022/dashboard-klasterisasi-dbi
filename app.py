@@ -505,34 +505,29 @@ elif menu == "Peta Clustering":
 
     try:
 
-        fig = px.choropleth_map(
-            data_peta,
-            geojson=peta_tampil,
-            locations="Kabupaten/Kota",
-            featureidkey="properties.nama",
-           color="Cluster",
-           color_discrete_map={
-           "1": "green",
-           "2": "yellow",
-          "3": "red"
-},
-            hover_name="Kabupaten/Kota",
-            map_style="carto-positron",
-            center={
-                "lat": -1.0,
-                "lon": 100.2
-            },
-            zoom=5.5,
-            opacity=0.7,
-            category_orders={
-                "Cluster": [
-                    "1",
-                    "2",
-                    "3"
-                ]
-            }
-        )
-
+       fig = px.choropleth_map(
+    data_peta,
+    geojson=peta_tampil,
+    locations="Kabupaten/Kota",
+    featureidkey="properties.nama",
+    color="Cluster",
+    color_discrete_map={
+        "1": "green",
+        "2": "yellow",
+        "3": "red"
+    },
+    hover_name="Kabupaten/Kota",
+    map_style="carto-positron",
+    fitbounds="locations",
+    opacity=0.7,
+    category_orders={
+        "Cluster": [
+            "1",
+            "2",
+            "3"
+        ]
+    }
+)
         fig.update_layout(
             margin=dict(
                 r=0,
